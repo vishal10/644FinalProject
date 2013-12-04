@@ -12,7 +12,7 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@android:style/Theme.Black" >
         <activity
             android:name="com.example.breathalyzer.MainActivity"
             android:label="@string/app_name" >
@@ -26,6 +26,13 @@
             android:name="com.example.breathalyzer.SettingsActivity"
             android:label="@string/title_activity_settings" >
         </activity>
+        <activity
+            android:name="com.example.breathalyzer.DrunkActivity"
+            android:label="@string/title_activity_drunk" >
+        </activity>
     </application>
-
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.SEND_SMS" />
+	<uses-permission android:name="android.permission.WRITE_SMS" />
+	<uses-permission android:name="android.permission.READ_SMS" />
 </manifest>

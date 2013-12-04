@@ -46,6 +46,19 @@ public class MainActivity extends Activity {
 				openSettings("");
 			}
 		});
+		
+		drunk_button.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				gotoDrunkPage();
+			}
+		});
+	}
+
+	protected void gotoDrunkPage() {
+		Intent i = new Intent(MainActivity.this, DrunkActivity.class);
+		startActivity(i);
 	}
 
 	protected void openSettings(String toastInfo) {
@@ -54,7 +67,6 @@ public class MainActivity extends Activity {
 			showToast("Please setup the application first!");
 		}
 		startActivity(i);
-		finish();
 	}
 
 	private void checkSavedData() {
