@@ -24,6 +24,9 @@
             android:text="Text Cab!" />
 
     </TableRow>
+    
+    <ProgressBar
+        android:id= "@+id/loading"/>
 
     <TableRow
         android:id="@+id/tableRow3"

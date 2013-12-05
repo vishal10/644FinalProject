@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -28,6 +29,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,21 +37,26 @@ public class DrunkActivity extends Activity {
 
 	private Button textFriendButton;
 	private Button textCabButton;
+	private ProgressBar loading;
 	private SharedPreferences prefs;
 	private String friendNumber;
 	private String cabNumber;
 	private Address address;
 	private BroadcastReceiver singleUpdateReceiver;
+	private LocationManager mlocManager;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_drunk);
 		
+		loading = (ProgressBar) findViewById(R.id.loading);
 		textFriendButton = (Button) findViewById(R.id.textFriend_button);
 		textCabButton = (Button) findViewById(R.id.textCab_button);
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		
+		hideLoading();
 		checkSavedData();
 		
 		friendNumber = prefs.getString("breathalyzer_friendNumber", "");
@@ -59,6 +66,7 @@ public class DrunkActivity extends Activity {
 			
 			@Override
 			public void onClick(View arg0) {
+				showLoading();
 				textFriend();
 			}
 		});
@@ -67,11 +75,28 @@ public class DrunkActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
+				showLoading();
 				textCab();
 			}
 		});
 	}
 	
+	private void showLoading() {
+		loading.setVisibility(View.VISIBLE);
+		textCabButton.setEnabled(false);
+		textCabButton.setAlpha((float) 0.25);
+		textFriendButton.setEnabled(false);
+		textFriendButton.setAlpha((float) 0.25);
+	}
+	
+	private void hideLoading() {
+		loading.setVisibility(View.GONE);
+		textCabButton.setEnabled(true);
+		textCabButton.setAlpha((float) 1);
+		textFriendButton.setEnabled(true);
+		textFriendButton.setAlpha((float) 1);
+	}
+
 	protected void textCab() {
 		getLocationUpdate(cabNumber, "");
 	}
@@ -94,25 +119,42 @@ public class DrunkActivity extends Activity {
 	}
 	
 	protected void getLocationUpdate(final String phoneNumber, final String message){
-		final LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		
 		Criteria criteria = new Criteria();
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		String REQUESTED = "LOCATION_REQUESTED";
+		
+		Location loc = mlocManager.getLastKnownLocation(mlocManager.getBestProvider(criteria, true));
+		
+		if(loc != null){
+			convertLocationToAddress(loc);
+	    	  
+	    	  if(address == null){
+	    		  hideLoading();
+	  			  showToast("Unable to find current address");
+	    	  } else{
+	    		  String finalMessage = message + getAddressString(address);
+	    		  sendSMS(phoneNumber, finalMessage);
+	    	  }
+  		  	return;
+		}
 		
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(REQUESTED), PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		singleUpdateReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				 context.unregisterReceiver(singleUpdateReceiver);
-			      String key = LocationManager.KEY_LOCATION_CHANGED;
+				  context.unregisterReceiver(singleUpdateReceiver);
+
+				  String key = LocationManager.KEY_LOCATION_CHANGED;
 			      Location location = (Location)intent.getExtras().get(key);
 			      
 			      if (location != null){
 			    	  convertLocationToAddress(location);
 			    	  
 			    	  if(address == null){
-			  			showToast("Unable to find current address");
+			    		  hideLoading();
+			  			  showToast("Unable to find current address");
 			    	  } else{
 			    		  String finalMessage = message + getAddressString(address);
 			    		  sendSMS(phoneNumber, finalMessage);
@@ -126,7 +168,6 @@ public class DrunkActivity extends Activity {
 		registerReceiver(singleUpdateReceiver, new IntentFilter(REQUESTED));
 		
 		mlocManager.requestSingleUpdate(mlocManager.getBestProvider(criteria, true), pendingIntent);
-		
 	}
 	
 	protected void convertLocationToAddress(Location loc) {
@@ -168,7 +209,9 @@ public class DrunkActivity extends Activity {
 			public void onReceive(Context context, Intent intent) {
 				switch (getResultCode()) {
 				case Activity.RESULT_OK:
-					Toast.makeText(getBaseContext(), "SMS Sent!", Toast.LENGTH_SHORT).show();
+					hideLoading();
+					showToast("SMS SENT!");
+
 					ContentValues values = new ContentValues();
 
 					values.put("address", phoneNumber);
@@ -211,10 +254,11 @@ public class DrunkActivity extends Activity {
 	public void showToast(String msg) {
 		Toast toast = new Toast(getApplicationContext());
 		toast.setDuration(Toast.LENGTH_LONG);
-		toast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+		toast.setGravity(Gravity.CENTER | Gravity.CENTER, 0, 0);
 		LayoutInflater inflater = getLayoutInflater();
 		View layout = inflater.inflate(R.layout.toast_layout,
 				(ViewGroup) findViewById(R.id.toast_layout_root));
+		layout.setBackgroundColor(Color.RED);
 		toast.setView(layout);
 		TextView text = (TextView) layout.findViewById(R.id.text);
 		text.setText(msg);

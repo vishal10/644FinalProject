@@ -45,7 +45,7 @@ public class SettingsActivity extends Activity {
 	private void initData() {
 		yourName.setText(prefs.getString("breathalyzer_name", ""));
 		friendsNumber.setText(prefs.getString("breathalyzer_friendNumber", ""));
-		cabNumber.setText(prefs.getString("breathalyzer_cabNumber", "4123218100"));
+		cabNumber.setText(prefs.getString("breathalyzer_cabNumber", "4123218294"));
 	}
 
 	protected void saveData() {
