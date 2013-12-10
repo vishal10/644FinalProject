@@ -207,15 +207,32 @@ public class MainActivity extends Activity {
                             {
                                 myLabel.setText(bytesRead + " Bytes Read, and " + bytesAvailable + " Bytes available, and Data: " + data);
                                 makeNotification();
-                                // Close BT since we want to ignore future calls
-                                /*try {
-									closeBT();
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}*/
                             }
                         }); 
+                        int bytesAvailable = mmInputStream.available();
+                        byte[] packetBytes = null;
+                        if(bytesAvailable > 0)
+                        {
+                            packetBytes = new byte[bytesAvailable];
+                            mmInputStream.read(packetBytes);
+                        }
+                        for(int i=0;i<bytesAvailable;i++)
+                        {
+                            byte b = packetBytes[i];
+                            if(b == delimiter)
+                            {
+                                byte[] encodedBytes2 = new byte[readBufferPosition];
+                                System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes2.length);
+                                final String data2 = new String(encodedBytes, "US-ASCII");
+                                readBufferPosition = 0;
+
+                                //The variable data now contains our full command
+                            }
+                            else
+                            {
+                                readBuffer[readBufferPosition++] = b;
+                            }
+                        }
                     }
                     catch (IOException ex) 
                     {
